@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'package:connect_pharma/screens/User/UserScreen.dart';
+import 'package:connect_pharma/screens/Pharmacist/PharmacistScreen.dart';
+// import rider screen when available
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,11 +21,15 @@ class _LoginScreenState extends State<LoginScreen> {
      setState(() => _loading = true);
     try {
       final cred = await authService.signIn(email: _email.text.trim(), password: _pass.text);
-      // final role = await authService.fetchRole(cred.user!.uid); // role not needed for UserScreen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const UserScreen()),
-      );
+      final role = await authService.fetchRole(cred.user!.uid);
+      if (role == 'pharmacist') {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const PharmacistScreen()));
+      } else if (role == 'rider') {
+        // replace with RiderScreen when created
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const UserScreen()));
+      } else {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const UserScreen()));
+      }
     } catch (e) {
       _show(e.toString());
     } finally {

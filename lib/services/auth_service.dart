@@ -6,7 +6,7 @@ class AuthService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   User? get currentUser => _auth.currentUser;
-
+  // ...existing code...
   Future<UserCredential> signUp({
     required String email,
     required String password,
@@ -18,13 +18,44 @@ class AuthService {
         email: email,
         password: password,
       );
-      await cred.user!.updateDisplayName(displayName);
-      await _db.collection('users').doc(cred.user!.uid).set({
+
+      final uid = cred.user!.uid;
+      if (displayName != null && displayName.isNotEmpty) {
+        await cred.user!.updateDisplayName(displayName);
+      }
+
+      final batch = _db.batch();
+      final usersRef = _db.collection('users').doc(uid);
+      batch.set(usersRef, {
+        'uid': uid,
         'email': email,
         'role': role,
         'displayName': displayName ?? '',
         'createdAt': FieldValue.serverTimestamp(),
       });
+
+      final roleCollection = role == 'pharmacist'
+          ? 'pharmacists'
+          : role == 'rider'
+              ? 'riders'
+              : 'users';
+      final roleRef = _db.collection(roleCollection).doc(uid);
+      batch.set(roleRef, {
+        'uid': uid,
+        'email': email,
+        'role': role,
+        'displayName': displayName ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // optional: create role meta doc once
+      final roleMetaRef = _db.collection('role_meta').doc(role);
+      final roleMetaSnap = await roleMetaRef.get();
+      if (!roleMetaSnap.exists) {
+        batch.set(roleMetaRef, {'createdAt': FieldValue.serverTimestamp()});
+      }
+
+      await batch.commit();
       return cred;
     } on FirebaseAuthException catch (e) {
       throw Exception('FirebaseAuthException(${e.code}): ${e.message}');
@@ -32,25 +63,35 @@ class AuthService {
       throw Exception('Sign up failed: $e');
     }
   }
-
-  
+// ...existing code...
 
   Future<UserCredential> signIn({
     required String email,
     required String password,
   }) async {
-    return await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final cred = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return cred;
+    } on FirebaseAuthException catch (e) {
+      throw Exception('FirebaseAuthException(${e.code}): ${e.message}');
+    } catch (e) {
+      throw Exception('Sign in failed: $e');
+    }
   }
-
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
 
   Future<String?> fetchRole(String uid) async {
-    final doc = await _db.collection('users').doc(uid).get();
-    return doc.data()?['role'] as String?;
+    final snap = await _db.collection('users').doc(uid).get();
+    if (!snap.exists) return null;
+    final data = snap.data();
+    return data != null && data.containsKey('role') ? (data['role'] as String) : null;
   }
 }
+
 
 final authService = AuthService();
