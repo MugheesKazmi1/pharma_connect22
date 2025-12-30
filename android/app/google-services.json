@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "157523900176",
+    "project_id": "connect-pharma-f676c",
+    "storage_bucket": "connect-pharma-f676c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:157523900176:android:b2e3bd6725d0e63dc5d795",
+        "android_client_info": {
+          "package_name": "com.example.connect_pharma"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVhqo-EIx-Yv0BdDSKsajH-A87k39ndWE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
