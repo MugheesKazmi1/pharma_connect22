@@ -49,7 +49,7 @@ class RequestService {
     required String userId,
     required String medicineName,
     String? prescriptionUrl,
-    bool broadcast = false,
+    bool broadcast = true,
     String? pharmacyId,
     Map<String, dynamic>? location,
     Map<String, dynamic>? meta,
