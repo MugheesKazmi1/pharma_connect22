@@ -5,10 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connect_pharma/services/request_service.dart';
-import 'package:connect_pharma/screens/User/DeliveryScreen.dart';
-import 'package:connect_pharma/screens/User/SelfPickupScreen.dart';
+import 'package:connect_pharma/widgets/FadeInSlide.dart';
 
 class UserScreen extends StatefulWidget {
+  // ... existing code ...
+
   const UserScreen({super.key});
 
   @override
@@ -400,7 +401,9 @@ class _UserScreenState extends State<UserScreen> {
                 });
 
               return Column(
-                children: sortedDocs.map((doc) {
+                children: sortedDocs.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final doc = entry.value;
                   final data = doc.data();
                   final status = data['status'] as String? ?? 'unknown';
                   final medicineName = data['medicineName'] as String? ?? '';
@@ -453,113 +456,116 @@ class _UserScreenState extends State<UserScreen> {
                   }
 
                   // Changed list tile to be inside a column to allow extra buttons at bottom
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    elevation: (status == 'accepted' || status == 'delivering') ? 4 : 2,
-                    color: (status == 'accepted' || status == 'delivering') ? Colors.green.shade50 : null,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: statusColor.withOpacity(0.2),
-                            child: Icon(statusIcon, color: statusColor, size: 24),
-                          ),
-                          title: Text(
-                            displayName,
-                            style: TextStyle(
-                              fontWeight: (status == 'accepted' || status == 'delivering')
-                                  ? FontWeight.bold 
-                                  : FontWeight.normal,
+                  return FadeInSlide(
+                    index: index,
+                    child: Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      elevation: (status == 'accepted' || status == 'delivering') ? 4 : 2,
+                      color: (status == 'accepted' || status == 'delivering') ? Colors.green.shade50 : null,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: statusColor.withOpacity(0.2),
+                              child: Icon(statusIcon, color: statusColor, size: 24),
                             ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(statusIcon, 
-                                       color: statusColor, 
-                                       size: 16),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    statusText,
-                                    style: TextStyle(
-                                      color: statusColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  if ((status == 'accepted' || status == 'delivering') && acceptedBy != null)
-                                    FutureBuilder<DocumentSnapshot>(
-                                      future: FirebaseFirestore.instance
-                                          .collection('pharmacists')
-                                          .doc(acceptedBy)
-                                          .get(),
-                                      builder: (context, pharmacySnapshot) {
-                                        if (pharmacySnapshot.hasData &&
-                                            pharmacySnapshot.data!.exists) {
-                                          final pharmacyData = 
-                                              pharmacySnapshot.data!.data() as Map<String, dynamic>?;
-                                          final pharmacyName = 
-                                              pharmacyData?['displayName'] as String? ?? 
-                                              pharmacyData?['pharmacyName'] as String? ?? 
-                                              pharmacyData?['name'] as String? ?? 
-                                              'Pharmacy';
-                                          return Padding(
-                                            padding: const EdgeInsets.only(left: 8),
-                                            child: Text(
-                                              'by $pharmacyName',
-                                              style: TextStyle(
-                                                color: Colors.green.shade700,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                        return const SizedBox.shrink();
-                                      },
-                                    ),
-                                ],
+                            title: Text(
+                              displayName,
+                              style: TextStyle(
+                                fontWeight: (status == 'accepted' || status == 'delivering')
+                                    ? FontWeight.bold 
+                                    : FontWeight.normal,
                               ),
-                              if (createdAt != null) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _formatTimestamp(createdAt),
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                              if (prescriptionUrl != null) ...[
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    Icon(Icons.image, 
-                                         size: 14, 
-                                         color: Colors.grey[600]),
+                                    Icon(statusIcon, 
+                                         color: statusColor, 
+                                         size: 16),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Prescription attached',
+                                      statusText,
                                       style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 12,
+                                        color: statusColor,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
+                                    if ((status == 'accepted' || status == 'delivering') && acceptedBy != null)
+                                      FutureBuilder<DocumentSnapshot>(
+                                        future: FirebaseFirestore.instance
+                                            .collection('pharmacists')
+                                            .doc(acceptedBy)
+                                            .get(),
+                                        builder: (context, pharmacySnapshot) {
+                                          if (pharmacySnapshot.hasData &&
+                                              pharmacySnapshot.data!.exists) {
+                                            final pharmacyData = 
+                                                pharmacySnapshot.data!.data() as Map<String, dynamic>?;
+                                            final pharmacyName = 
+                                                pharmacyData?['displayName'] as String? ?? 
+                                                pharmacyData?['pharmacyName'] as String? ?? 
+                                                pharmacyData?['name'] as String? ?? 
+                                                'Pharmacy';
+                                            return Padding(
+                                              padding: const EdgeInsets.only(left: 8),
+                                              child: Text(
+                                                'by $pharmacyName',
+                                                style: TextStyle(
+                                                  color: Colors.green.shade700,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          return const SizedBox.shrink();
+                                        },
+                                      ),
                                   ],
                                 ),
+                                if (createdAt != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _formatTimestamp(createdAt),
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                                if (prescriptionUrl != null) ...[
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.image, 
+                                           size: 14, 
+                                           color: Colors.grey[600]),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Prescription attached',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
+                            trailing: null,
                           ),
-                          trailing: null,
-                        ),
-                        // Add buttons if accepted or delivering
-                        if (status == 'accepted')
-                          _buildAcceptedOptions(doc.id, data),
-                        if (status == 'delivering')
-                           _buildTrackDeliveryOption(doc.id, data),
-                      ],
+                          // Add buttons if accepted or delivering
+                          if (status == 'accepted')
+                            _buildAcceptedOptions(doc.id, data),
+                          if (status == 'delivering')
+                             _buildTrackDeliveryOption(doc.id, data),
+                        ],
+                      ),
                     ),
                   );
                 }).toList(),
